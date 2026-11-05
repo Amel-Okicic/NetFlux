@@ -1,6 +1,5 @@
 # NetFlux
 
-[![Latest release](https://img.shields.io/github/v/release/linessharp-debug/NetFlux)](https://github.com/linessharp-debug/NetFlux/releases)
 [![Windows x64](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D6)](https://github.com/linessharp-debug/NetFlux)
 [![Rust](https://img.shields.io/badge/built%20with-Rust-orange)](https://www.rust-lang.org/)
 [![Build Windows executable](https://github.com/linessharp-debug/NetFlux/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/linessharp-debug/NetFlux/actions/workflows/build-windows.yml)
@@ -11,7 +10,12 @@ Set separate download and upload limits, block an application's network traffic,
 
 The application is written in Rust and uses WinDivert 2.2.2 for packet interception and traffic shaping.
 
+[Download NetFlux for Windows](https://github.com/Amel-Okicic/NetFlux/releases/latest)
+
 ## At a glance
+
+### Main Dashboard
+![NetFlux Main Dashboard](screenshots/main-dashboard.png)
 
 - Monitor live download and upload rates across running applications.
 - See per-process traffic totals, active flow counts, and current network policies.
@@ -23,6 +27,8 @@ The application is written in Rust and uses WinDivert 2.2.2 for packet intercept
 - Set independent maximum download and upload rates for the whole computer.
 - Keep NetFlux running in the system tray while its window is hidden.
 - Save rules and interface preferences across restarts.
+
+[Download NetFlux for Windows](https://github.com/Amel-Okicic/NetFlux/releases/latest)
 
 ## Feature guide
 
@@ -167,6 +173,8 @@ Actions that cannot apply to the current selection are disabled. The bulk limit 
 <!-- Screenshot placeholder: multi-selection and bulk action toolbar -->
 
 ### 6. Built-in and custom bandwidth presets
+
+![NetFlux Bandwidth Limits](screenshots/bandwidth-limits.png)
 
 Presets make frequently used speed combinations quick to apply.
 
@@ -365,6 +373,8 @@ NetFlux is **source-available** and uses multiple licenses. The license depends 
 - **License scope and mixed files:** see [LICENSES.md](LICENSES.md).
 
 The original Throttle portions remain under MIT. Amel's covered NetFlux contributions are noncommercial unless separate commercial permission is obtained. The PolyForm terms do not convert the entire project to MIT, and the MIT terms do not grant commercial rights to PolyForm-covered contributions.
+
+[Download NetFlux for Windows](https://github.com/Amel-Okicic/NetFlux/releases/latest)
 
 ## Credits
 
