@@ -1,0 +1,65 @@
+name: Build Windows executable
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "build.rs"
+      - ".cargo/**"
+      - "assets/**"
+      - "vendor/**"
+      - "*.manifest"
+      - ".github/workflows/build-windows.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: netflux-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build NetFlux for Windows x64
+    runs-on: windows-latest
+    env:
+      CARGO_TERM_COLOR: always
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build release executable
+        run: cargo build --release
+
+      - name: Assemble runnable package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force -Path "dist/NetFlux" | Out-Null
+          Copy-Item "target/release/netflux.exe" "dist/NetFlux/netflux.exe"
+          Copy-Item "vendor/WinDivert-2.2.2-A/x64/WinDivert.dll" "dist/NetFlux/WinDivert.dll"
+          Copy-Item "vendor/WinDivert-2.2.2-A/x64/WinDivert64.sys" "dist/NetFlux/WinDivert64.sys"
+          Copy-Item "LICENSE" "dist/NetFlux/LICENSE.txt"
+          Copy-Item "LICENSE-MIT-THROTTLE" "dist/NetFlux/LICENSE-MIT-THROTTLE.txt"
+          Copy-Item "LICENSE-NETFLUX-NONCOMMERCIAL.md" "dist/NetFlux/LICENSE-NETFLUX-NONCOMMERCIAL.txt"
+          Copy-Item "LICENSES.md" "dist/NetFlux/LICENSES.txt"
+          Copy-Item "vendor/WinDivert-2.2.2-A/LICENSE" "dist/NetFlux/WinDivert-LICENSE.txt"
+
+      - name: Upload ready-to-run package
+        uses: actions/upload-artifact@v6
+        with:
+          name: NetFlux-Windows-x64
+          path: dist/NetFlux/
+          if-no-files-found: error
+          retention-days: 14
