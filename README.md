@@ -1,8 +1,6 @@
 # NetFlux
 
-[![Windows x64](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D6)](https://github.com/linessharp-debug/NetFlux)
 [![Rust](https://img.shields.io/badge/built%20with-Rust-orange)](https://www.rust-lang.org/)
-[![Build Windows executable](https://github.com/linessharp-debug/NetFlux/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/linessharp-debug/NetFlux/actions/workflows/build-windows.yml)
 
 **NetFlux is a source-available Windows network monitor and bandwidth controller.** It shows live network activity by process and gives you direct control over how much bandwidth each application can use — or how much bandwidth the entire computer can use.
 
@@ -316,7 +314,6 @@ The workflow artifact is retained for 14 days. See [GITHUB_ACTIONS_BUILD.md](GIT
 
 The release workflow is configured to build and publish a Windows x64 ZIP when a version tag beginning with v is pushed. The package includes the executable, WinDivert runtime files, applicable license documents, and a SHA-256 checksum file.
 
-[Open NetFlux releases](https://github.com/linessharp-debug/NetFlux/releases)
 
 ## Administrator permissions and troubleshooting
 
@@ -355,14 +352,6 @@ The build configuration links against the vendored WinDivert import library and 
 
 GitHub Actions also runs formatting, Clippy, tests, and Windows release compilation as part of the release workflow.
 
-## Update system status
-
-The source includes a background GitHub release checker and an in-app updater. The updater can download a Windows package, verify its SHA-256 checksum, replace the executable, and restart NetFlux.
-
-**Repository configuration still needs alignment:** the updater endpoint and Cargo repository metadata currently refer to the older Amel-Okicic/NetFlux address, not this linessharp-debug/NetFlux repository. The in-app update check and Help/About links therefore should not be relied on for releases published here until those source settings are updated.
-
-No published release is currently available in this repository. Use the GitHub Actions build artifact for now.
-
 ## Licensing
 
 NetFlux is **source-available** and uses multiple licenses. The license depends on the origin of the specific code or contribution.
@@ -382,21 +371,4 @@ The original Throttle portions remain under MIT. Amel's covered NetFlux contribu
 - Based on Throttle v0.1.2 by [Francesco Gruosso](https://github.com/FrancescoCoding)
 - Packet driver: WinDivert 2.2.2
 
-## Screenshots
 
-Screenshots will be added here. The suggested filenames below can be used when adding images to the repository.
-
-<!-- Screenshot placeholder: docs/screenshots/dashboard.png -->
-<!-- Screenshot placeholder: docs/screenshots/process-monitoring.png -->
-<!-- Screenshot placeholder: docs/screenshots/search-and-filters.png -->
-<!-- Screenshot placeholder: docs/screenshots/process-limits-and-blocking.png -->
-<!-- Screenshot placeholder: docs/screenshots/temporary-limits.png -->
-<!-- Screenshot placeholder: docs/screenshots/bulk-actions.png -->
-<!-- Screenshot placeholder: docs/screenshots/custom-presets.png -->
-<!-- Screenshot placeholder: docs/screenshots/global-limits.png -->
-<!-- Screenshot placeholder: docs/screenshots/traffic-rules.png -->
-<!-- Screenshot placeholder: docs/screenshots/system-tray.png -->
-
----
-
-**Project:** [github.com/linessharp-debug/NetFlux](https://github.com/linessharp-debug/NetFlux)
