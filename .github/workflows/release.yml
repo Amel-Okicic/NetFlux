@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: netflux-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish Windows x64 release
+    runs-on: windows-latest
+    env:
+      CARGO_TERM_COLOR: always
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Verify formatting, lint and tests
+        run: |
+          cargo fmt --all --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test
+
+      - name: Build release executable
+        run: cargo build --release
+
+      - name: Assemble release package and checksum
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $tag = $env:GITHUB_REF_NAME
+          $zipName = "NetFlux-$tag-windows-x64.zip"
+          New-Item -ItemType Directory -Force -Path "dist/NetFlux" | Out-Null
+          Copy-Item "target/release/netflux.exe" "dist/NetFlux/netflux.exe"
+          Copy-Item "vendor/WinDivert-2.2.2-A/x64/WinDivert.dll" "dist/NetFlux/WinDivert.dll"
+          Copy-Item "vendor/WinDivert-2.2.2-A/x64/WinDivert64.sys" "dist/NetFlux/WinDivert64.sys"
+          Copy-Item "LICENSE" "dist/NetFlux/LICENSE.txt"
+          Copy-Item "LICENSE-MIT-THROTTLE" "dist/NetFlux/LICENSE-MIT-THROTTLE.txt"
+          Copy-Item "LICENSE-NETFLUX-NONCOMMERCIAL.md" "dist/NetFlux/LICENSE-NETFLUX-NONCOMMERCIAL.txt"
+          Copy-Item "LICENSES.md" "dist/NetFlux/LICENSES.txt"
+          Copy-Item "vendor/WinDivert-2.2.2-A/LICENSE" "dist/NetFlux/WinDivert-LICENSE.txt"
+          Compress-Archive -Path "dist/NetFlux/*" -DestinationPath $zipName -Force
+          $hash = (Get-FileHash -Algorithm SHA256 $zipName).Hash.ToLowerInvariant()
+          [System.IO.File]::WriteAllText("$zipName.sha256", "$hash  $zipName`n", [System.Text.Encoding]::ASCII)
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $zipName = "NetFlux-$tag-windows-x64.zip"
+          gh release create $tag $zipName "$zipName.sha256" --generate-notes --verify-tag
