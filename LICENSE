@@ -1,0 +1,7 @@
+NetFlux uses multiple licenses. No single license applies to every file or contribution in this repository.
+
+- Original Throttle v0.1.2 code by Francesco Gruosso: MIT License, in LICENSE-MIT-THROTTLE.
+- Original NetFlux contributions by Amel Okicic: PolyForm Noncommercial License 1.0.0, in LICENSE-NETFLUX-NONCOMMERCIAL.md.
+- WinDivert: separate third-party license terms in vendor/WinDivert-2.2.2-A/LICENSE.
+
+Read LICENSES.md for the scope map, including how licensing applies to mixed source files.
