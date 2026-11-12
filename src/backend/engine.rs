@@ -287,9 +287,9 @@ fn handle_packet(
         .as_ref()
         .filter(|e| synthetic::is_shapable(e))
         .and_then(|e| shared.rules.lock().unwrap().get(e).cloned());
-    let process_limit = rule.as_ref().and_then(|r| {
-        if outbound { r.up_limit } else { r.down_limit }
-    });
+    let process_limit = rule
+        .as_ref()
+        .and_then(|r| if outbound { r.up_limit } else { r.down_limit });
     let global_limits = *shared.global_limits.lock().unwrap();
     let global_limit = if outbound {
         global_limits.up_limit
@@ -311,7 +311,9 @@ fn handle_packet(
     // With a global cap, every packet enters the fair scheduler. This avoids
     // letting the first process to arrive consume the shared token bucket.
     if global_limit.is_some() {
-        let bucket_key = exe.clone().unwrap_or_else(|| UNATTRIBUTED_BUCKET_KEY.to_string());
+        let bucket_key = exe
+            .clone()
+            .unwrap_or_else(|| UNATTRIBUTED_BUCKET_KEY.to_string());
         let plen = packet.data.len();
         let mut buckets = shared.buckets.lock().unwrap();
         let bucket = buckets
@@ -324,9 +326,7 @@ fn handle_packet(
             bucket.tb = None;
         }
 
-        if bucket.queue.len() < MAX_QUEUE_PKTS
-            && bucket.queued_bytes + plen <= MAX_QUEUE_BYTES
-        {
+        if bucket.queue.len() < MAX_QUEUE_PKTS && bucket.queued_bytes + plen <= MAX_QUEUE_BYTES {
             bucket.queued_bytes += plen;
             bucket.queue.push_back(packet);
             stats.queued += 1;
@@ -347,7 +347,9 @@ fn handle_packet(
             stats,
         ),
         Some(rate) => {
-            let bucket_key = exe.clone().expect("a process rule requires an executable path");
+            let bucket_key = exe
+                .clone()
+                .expect("a process rule requires an executable path");
             let plen = packet.data.len();
             let mut buckets = shared.buckets.lock().unwrap();
             let bucket = buckets
@@ -359,7 +361,15 @@ fn handle_packet(
 
             if tb.try_take(len) {
                 drop(buckets);
-                send_and_count(divert, shared, &packet, exe.as_deref(), outbound, len, stats);
+                send_and_count(
+                    divert,
+                    shared,
+                    &packet,
+                    exe.as_deref(),
+                    outbound,
+                    len,
+                    stats,
+                );
             } else if bucket.queue.len() < MAX_QUEUE_PKTS
                 && bucket.queued_bytes + plen <= MAX_QUEUE_BYTES
             {
@@ -535,19 +545,14 @@ pub fn run_drainer(shared: Arc<Shared>, handle: Arc<EngineHandle>) {
                         .saturating_add(DRR_QUANTUM)
                         .min(MAX_QUEUE_BYTES as u64);
 
-                    loop {
-                        let Some(front) = bucket.queue.front() else {
-                            break;
-                        };
+                    while let Some(front) = bucket.queue.front() {
                         let len = front.data.len() as u64;
                         if len > bucket.deficit {
                             break;
                         }
 
-                        let process_available = bucket
-                            .tb
-                            .as_ref()
-                            .is_none_or(|tb| tb.can_take(len));
+                        let process_available =
+                            bucket.tb.as_ref().is_none_or(|tb| tb.can_take(len));
                         let global_active = rate_for(key.1).is_some_and(|rate| rate > 0);
                         let global_available = if global_active {
                             global_buckets
@@ -564,10 +569,8 @@ pub fn run_drainer(shared: Arc<Shared>, handle: Arc<EngineHandle>) {
                         if let Some(tb) = bucket.tb.as_mut() {
                             let _ = tb.try_take(len);
                         }
-                        if global_active {
-                            if let Some(tb) = global_buckets.get_mut(&key.1) {
-                                let _ = tb.try_take(len);
-                            }
+                        if global_active && let Some(tb) = global_buckets.get_mut(&key.1) {
+                            let _ = tb.try_take(len);
                         }
 
                         let packet = bucket.queue.pop_front().unwrap();

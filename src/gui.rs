@@ -1186,12 +1186,12 @@ impl NetFluxApp {
 
         // Restore the tray icon with its saved preference. A failure should
         // not leave the UI showing an enabled state without an actual icon.
-        if app.close_to_tray {
-            if let Err(error) = app.enable_tray_icon(&cc.egui_ctx) {
-                tracing::warn!("could not restore close-to-tray preference: {error}");
-                app.close_to_tray = false;
-                app.persist_ui_settings();
-            }
+        if app.close_to_tray
+            && let Err(error) = app.enable_tray_icon(&cc.egui_ctx)
+        {
+            tracing::warn!("could not restore close-to-tray preference: {error}");
+            app.close_to_tray = false;
+            app.persist_ui_settings();
         }
 
         app
@@ -1400,13 +1400,18 @@ impl NetFluxApp {
     }
 
     fn open_global_limit_modal(&mut self) {
-        let limits = self.pending_global_limits.unwrap_or(self.last_snapshot.global_limits);
+        let limits = self
+            .pending_global_limits
+            .unwrap_or(self.last_snapshot.global_limits);
         let editable = |bps: Option<u64>| match bps {
             Some(bps) => {
                 let (value, unit) = RateUnit::decompose(bps);
                 let value = format!("{value:.2}");
                 (
-                    value.trim_end_matches('0').trim_end_matches('.').to_string(),
+                    value
+                        .trim_end_matches('0')
+                        .trim_end_matches('.')
+                        .to_string(),
                     unit,
                 )
             }
@@ -1539,16 +1544,16 @@ impl NetFluxApp {
             );
         }
 
-        if response.clicked() {
-            if let Some(sort) = sort_column {
-                if self.sort_column == sort {
-                    self.sort_desc = !self.sort_desc;
-                } else {
-                    self.sort_column = sort;
-                    self.sort_desc = true;
-                }
-                self.persist_ui_settings();
+        if response.clicked()
+            && let Some(sort) = sort_column
+        {
+            if self.sort_column == sort {
+                self.sort_desc = !self.sort_desc;
+            } else {
+                self.sort_column = sort;
+                self.sort_desc = true;
             }
+            self.persist_ui_settings();
         }
 
         let _ = response.clone().on_hover_text(if sort_column.is_some() {
@@ -1889,7 +1894,7 @@ impl NetFluxApp {
                             egui::TextEdit::singleline(&mut editor.name)
                                 .hint_text("e.g. Background")
                                 .horizontal_align(egui::Align::Center)
-                                .vertical_align(egui::Align::Center)
+                                .vertical_align(egui::Align::Center),
                         );
 
                         ui.add_space(16.0);
@@ -1905,7 +1910,7 @@ impl NetFluxApp {
                                 egui::TextEdit::singleline(&mut editor.down_value)
                                     .hint_text("Unlimited")
                                     .horizontal_align(egui::Align::Center)
-                                    .vertical_align(egui::Align::Center)
+                                    .vertical_align(egui::Align::Center),
                             );
                             columns[1].label(
                                 egui::RichText::new("UPLOAD LIMIT (MB/s)")
@@ -1918,7 +1923,7 @@ impl NetFluxApp {
                                 egui::TextEdit::singleline(&mut editor.up_value)
                                     .hint_text("Unlimited")
                                     .horizontal_align(egui::Align::Center)
-                                    .vertical_align(egui::Align::Center)
+                                    .vertical_align(egui::Align::Center),
                             );
                         });
                         ui.add_space(8.0);
@@ -2290,131 +2295,159 @@ impl NetFluxApp {
                                     .max_height(109.2)
                                     .auto_shrink([false, true])
                                     .show(ui, |ui| {
-                                    for line in right_lines.iter().take(2) {
-                                        let line_color = if line.starts_with("GLOBAL DOWNLOAD") {
-                                            COLOR_DOWN
-                                        } else {
-                                            COLOR_UP
-                                        };
-                                        ui.label(
-                                            egui::RichText::new(line)
-                                                .size(9.0)
-                                                .color(line_color),
-                                        );
-                                    }
-                                    if !right_lines.is_empty() {
-                                        ui.add_space(9.0);
-                                        let unlimit_clicked = ui
-                                            .scope(|ui| {
-                                                let visuals = ui.visuals_mut();
-                                                visuals.widgets.inactive.weak_bg_fill =
-                                                    egui::Color32::from_rgb(0xd3, 0xd3, 0xd3);
-                                                visuals.widgets.inactive.bg_stroke =
-                                                    egui::Stroke::new(
-                                                        1.0,
-                                                        egui::Color32::from_rgb(0x9a, 0xa1, 0xac),
-                                                    );
-                                                visuals.widgets.hovered.weak_bg_fill =
-                                                    egui::Color32::from_rgb(0xe3, 0xe6, 0xeb);
-                                                visuals.widgets.hovered.bg_stroke =
-                                                    egui::Stroke::new(
-                                                        1.0,
-                                                        egui::Color32::from_rgb(0xc7, 0xcc, 0xd4),
-                                                    );
-                                                visuals.widgets.active.weak_bg_fill =
-                                                    egui::Color32::from_rgb(0xf0, 0xf1, 0xf3);
-                                                visuals.widgets.inactive.fg_stroke =
-                                                    egui::Stroke::new(1.0, egui::Color32::BLACK);
-                                                visuals.widgets.hovered.fg_stroke =
-                                                    egui::Stroke::new(1.0, egui::Color32::BLACK);
-                                                visuals.widgets.active.fg_stroke =
-                                                    egui::Stroke::new(1.0, egui::Color32::BLACK);
-
-                                                ui.add_sized(
-                                                    [98.0, 30.0],
-                                                    egui::Button::new(
-                                                        egui::RichText::new("UNLIMIT")
-                                                            .size(12.0)
-                                                            .strong()
-                                                            .color(egui::Color32::BLACK),
-                                                    )
-                                                    .corner_radius(egui::CornerRadius::same(3)),
-                                                )
-                                                .on_hover_text("Remove both global bandwidth limits")
-                                                .clicked()
-                                            })
-                                            .inner;
-                                        if unlimit_clicked {
-                                            ui.ctx().data_mut(|data| {
-                                                data.insert_temp(
-                                                    egui::Id::new("netflux-global-unlimit-click"),
-                                                    true,
-                                                )
-                                            });
-                                        }
-                                    }
-                                    for (index, (key, name)) in
-                                        clickable_lines.iter().enumerate()
-                                    {
-                                        ui.horizontal(|ui| {
-                                            let response = ui.add(
-                                                egui::Button::new(
-                                                    egui::RichText::new(format!(
-                                                        "{}. {}",
-                                                        index + 1,
-                                                        name
-                                                    ))
+                                        for line in right_lines.iter().take(2) {
+                                            let line_color = if line.starts_with("GLOBAL DOWNLOAD")
+                                            {
+                                                COLOR_DOWN
+                                            } else {
+                                                COLOR_UP
+                                            };
+                                            ui.label(
+                                                egui::RichText::new(line)
                                                     .size(9.0)
-                                                    .color(COLOR_LIGHT_GREY),
-                                                )
-                                                .frame(false),
+                                                    .color(line_color),
                                             );
-                                            if response.clicked() {
+                                        }
+                                        if !right_lines.is_empty() {
+                                            ui.add_space(9.0);
+                                            let unlimit_clicked = ui
+                                                .scope(|ui| {
+                                                    let visuals = ui.visuals_mut();
+                                                    visuals.widgets.inactive.weak_bg_fill =
+                                                        egui::Color32::from_rgb(0xd3, 0xd3, 0xd3);
+                                                    visuals.widgets.inactive.bg_stroke =
+                                                        egui::Stroke::new(
+                                                            1.0,
+                                                            egui::Color32::from_rgb(
+                                                                0x9a, 0xa1, 0xac,
+                                                            ),
+                                                        );
+                                                    visuals.widgets.hovered.weak_bg_fill =
+                                                        egui::Color32::from_rgb(0xe3, 0xe6, 0xeb);
+                                                    visuals.widgets.hovered.bg_stroke =
+                                                        egui::Stroke::new(
+                                                            1.0,
+                                                            egui::Color32::from_rgb(
+                                                                0xc7, 0xcc, 0xd4,
+                                                            ),
+                                                        );
+                                                    visuals.widgets.active.weak_bg_fill =
+                                                        egui::Color32::from_rgb(0xf0, 0xf1, 0xf3);
+                                                    visuals.widgets.inactive.fg_stroke =
+                                                        egui::Stroke::new(
+                                                            1.0,
+                                                            egui::Color32::BLACK,
+                                                        );
+                                                    visuals.widgets.hovered.fg_stroke =
+                                                        egui::Stroke::new(
+                                                            1.0,
+                                                            egui::Color32::BLACK,
+                                                        );
+                                                    visuals.widgets.active.fg_stroke =
+                                                        egui::Stroke::new(
+                                                            1.0,
+                                                            egui::Color32::BLACK,
+                                                        );
+
+                                                    ui.add_sized(
+                                                        [98.0, 30.0],
+                                                        egui::Button::new(
+                                                            egui::RichText::new("UNLIMIT")
+                                                                .size(12.0)
+                                                                .strong()
+                                                                .color(egui::Color32::BLACK),
+                                                        )
+                                                        .corner_radius(egui::CornerRadius::same(3)),
+                                                    )
+                                                    .on_hover_text(
+                                                        "Remove both global bandwidth limits",
+                                                    )
+                                                    .clicked()
+                                                })
+                                                .inner;
+                                            if unlimit_clicked {
                                                 ui.ctx().data_mut(|data| {
                                                     data.insert_temp(
-                                                        egui::Id::new("netflux-top-process-click"),
-                                                        (key.clone(), name.clone()),
+                                                        egui::Id::new(
+                                                            "netflux-global-unlimit-click",
+                                                        ),
+                                                        true,
                                                     )
                                                 });
                                             }
-                                            if let Some((down, up, blocked)) = rule_limits.get(index) {
-                                                if *blocked {
-                                                    draw_asset_icon(
-                                                        ui,
-                                                        "bytes://netflux-rule-blocked.svg",
-                                                        include_bytes!("../assets/BlockedIcon.svg"),
-                                                        13.0,
-                                                    );
+                                        }
+                                        for (index, (key, name)) in
+                                            clickable_lines.iter().enumerate()
+                                        {
+                                            ui.horizontal(|ui| {
+                                                let response = ui.add(
+                                                    egui::Button::new(
+                                                        egui::RichText::new(format!(
+                                                            "{}. {}",
+                                                            index + 1,
+                                                            name
+                                                        ))
+                                                        .size(9.0)
+                                                        .color(COLOR_LIGHT_GREY),
+                                                    )
+                                                    .frame(false),
+                                                );
+                                                if response.clicked() {
+                                                    ui.ctx().data_mut(|data| {
+                                                        data.insert_temp(
+                                                            egui::Id::new(
+                                                                "netflux-top-process-click",
+                                                            ),
+                                                            (key.clone(), name.clone()),
+                                                        )
+                                                    });
                                                 }
-                                                if let Some(rate) = down {
-                                                    draw_asset_icon(
-                                                        ui,
-                                                        "bytes://netflux-rule-download.svg",
-                                                        include_bytes!("../assets/DownloadIco.svg"),
-                                                        13.0,
-                                                    );
-                                                    ui.label(
-                                                        egui::RichText::new(rate)
-                                                            .size(9.0)
-                                                            .color(COLOR_LIGHT_GREY),
-                                                    );
+                                                if let Some((down, up, blocked)) =
+                                                    rule_limits.get(index)
+                                                {
+                                                    if *blocked {
+                                                        draw_asset_icon(
+                                                            ui,
+                                                            "bytes://netflux-rule-blocked.svg",
+                                                            include_bytes!(
+                                                                "../assets/BlockedIcon.svg"
+                                                            ),
+                                                            13.0,
+                                                        );
+                                                    }
+                                                    if let Some(rate) = down {
+                                                        draw_asset_icon(
+                                                            ui,
+                                                            "bytes://netflux-rule-download.svg",
+                                                            include_bytes!(
+                                                                "../assets/DownloadIco.svg"
+                                                            ),
+                                                            13.0,
+                                                        );
+                                                        ui.label(
+                                                            egui::RichText::new(rate)
+                                                                .size(9.0)
+                                                                .color(COLOR_LIGHT_GREY),
+                                                        );
+                                                    }
+                                                    if let Some(rate) = up {
+                                                        draw_asset_icon(
+                                                            ui,
+                                                            "bytes://netflux-rule-upload.svg",
+                                                            include_bytes!(
+                                                                "../assets/UploadIco.svg"
+                                                            ),
+                                                            13.0,
+                                                        );
+                                                        ui.label(
+                                                            egui::RichText::new(rate)
+                                                                .size(9.0)
+                                                                .color(COLOR_LIGHT_GREY),
+                                                        );
+                                                    }
                                                 }
-                                                if let Some(rate) = up {
-                                                    draw_asset_icon(
-                                                        ui,
-                                                        "bytes://netflux-rule-upload.svg",
-                                                        include_bytes!("../assets/UploadIco.svg"),
-                                                        13.0,
-                                                    );
-                                                    ui.label(
-                                                        egui::RichText::new(rate)
-                                                            .size(9.0)
-                                                            .color(COLOR_LIGHT_GREY),
-                                                    );
-                                                }
-                                            }
-                                        });
-                                    }
+                                            });
+                                        }
                                     });
                             } else {
                                 let line_color = if title == "PROCESSES" {
@@ -2689,23 +2722,17 @@ impl NetFluxApp {
                         .clicked()
                     {
                         let mut limits = effective_limits;
-                        limits.down_limit = if down_active {
-                            None
-                        } else {
-                            Some(MB as u64)
-                        };
+                        limits.down_limit = if down_active { None } else { Some(MB as u64) };
                         self.send_global_limits(limits);
                     }
 
                     if ui
                         .add_sized(
                             [76.0, 32.0],
-                            egui::Button::new(
-                                egui::RichText::new("CUSTOM").size(10.0).strong(),
-                            )
-                            .fill(egui::Color32::from_rgb(0x17, 0x1a, 0x24))
-                            .stroke(egui::Stroke::new(1.0, COLOR_BORDER))
-                            .corner_radius(egui::CornerRadius::same(18)),
+                            egui::Button::new(egui::RichText::new("CUSTOM").size(10.0).strong())
+                                .fill(egui::Color32::from_rgb(0x17, 0x1a, 0x24))
+                                .stroke(egui::Stroke::new(1.0, COLOR_BORDER))
+                                .corner_radius(egui::CornerRadius::same(18)),
                         )
                         .clicked()
                     {
@@ -2769,12 +2796,10 @@ impl NetFluxApp {
                     if ui
                         .add_sized(
                             [76.0, 32.0],
-                            egui::Button::new(
-                                egui::RichText::new("CUSTOM").size(10.0).strong(),
-                            )
-                            .fill(egui::Color32::from_rgb(0x17, 0x1a, 0x24))
-                            .stroke(egui::Stroke::new(1.0, COLOR_BORDER))
-                            .corner_radius(egui::CornerRadius::same(18)),
+                            egui::Button::new(egui::RichText::new("CUSTOM").size(10.0).strong())
+                                .fill(egui::Color32::from_rgb(0x17, 0x1a, 0x24))
+                                .stroke(egui::Stroke::new(1.0, COLOR_BORDER))
+                                .corner_radius(egui::CornerRadius::same(18)),
                         )
                         .clicked()
                     {
@@ -3161,27 +3186,22 @@ impl NetFluxApp {
                 .color(COLOR_LIGHT_GREY),
         );
 
-        let compact_button = |
-            ui: &mut egui::Ui,
-            label: &str,
-            width: f32,
-            tooltip: &str,
-            enabled: bool,
-        | {
-            ui.add_enabled(
-                enabled,
-                egui::Button::new(egui::RichText::new(label).size(10.0).strong())
-                    .min_size(egui::vec2(width, 32.0))
-                    .fill(egui::Color32::from_rgb(0x2b, 0x2b, 0x69))
-                    .stroke(egui::Stroke::new(
-                        1.0,
-                        egui::Color32::from_rgb(0x65, 0x6c, 0xd9),
-                    ))
-                    .corner_radius(egui::CornerRadius::same(14)),
-            )
-            .on_hover_text(tooltip)
-            .clicked()
-        };
+        let compact_button =
+            |ui: &mut egui::Ui, label: &str, width: f32, tooltip: &str, enabled: bool| {
+                ui.add_enabled(
+                    enabled,
+                    egui::Button::new(egui::RichText::new(label).size(10.0).strong())
+                        .min_size(egui::vec2(width, 32.0))
+                        .fill(egui::Color32::from_rgb(0x2b, 0x2b, 0x69))
+                        .stroke(egui::Stroke::new(
+                            1.0,
+                            egui::Color32::from_rgb(0x65, 0x6c, 0xd9),
+                        ))
+                        .corner_radius(egui::CornerRadius::same(14)),
+                )
+                .on_hover_text(tooltip)
+                .clicked()
+            };
 
         if compact_button(ui, "SELECT ALL", 78.0, "Select all visible processes", true) {
             self.selected_processes.extend(visible_keys.iter().cloned());
@@ -3487,7 +3507,7 @@ impl NetFluxApp {
         self.process_icons.insert(key.to_string(), texture.clone());
         Some(texture)
     }
-
+    #[allow(clippy::too_many_arguments)]
     fn draw_table_row(
         &mut self,
         mut row: egui_extras::TableRow,
@@ -3832,17 +3852,23 @@ impl NetFluxApp {
                             let visuals = ui.visuals_mut();
                             visuals.window_fill = egui::Color32::from_rgb(0x12, 0x11, 0x16);
                             visuals.extreme_bg_color = egui::Color32::from_rgb(0x0d, 0x0d, 0x10);
-                            visuals.widgets.inactive.bg_fill = egui::Color32::from_rgb(0x17, 0x1a, 0x24);
-                            visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1.0, COLOR_BORDER);
-                            visuals.widgets.hovered.bg_fill = egui::Color32::from_rgb(0x25, 0x35, 0x4d);
-                            visuals.widgets.active.bg_fill = egui::Color32::from_rgb(0x2b, 0x43, 0x69);
+                            visuals.widgets.inactive.bg_fill =
+                                egui::Color32::from_rgb(0x17, 0x1a, 0x24);
+                            visuals.widgets.inactive.bg_stroke =
+                                egui::Stroke::new(1.0, COLOR_BORDER);
+                            visuals.widgets.hovered.bg_fill =
+                                egui::Color32::from_rgb(0x25, 0x35, 0x4d);
+                            visuals.widgets.active.bg_fill =
+                                egui::Color32::from_rgb(0x2b, 0x43, 0x69);
                         }
 
                         ui.vertical_centered(|ui| {
                             ui.label(
-                                egui::RichText::new("Set independent maximum speeds for the entire computer")
-                                    .size(14.0)
-                                    .color(COLOR_MUTED),
+                                egui::RichText::new(
+                                    "Set independent maximum speeds for the entire computer",
+                                )
+                                .size(14.0)
+                                .color(COLOR_MUTED),
                             );
                         });
                         ui.add_space(20.0);
@@ -3888,7 +3914,7 @@ impl NetFluxApp {
                                                         .font(egui::TextStyle::Heading)
                                                         .horizontal_align(egui::Align::Center)
                                                         .hint_text("Unlimited")
-                                                        .vertical_align(egui::Align::Center)
+                                                        .vertical_align(egui::Align::Center),
                                                 );
                                                 egui::ComboBox::from_id_salt(unit_id)
                                                     .selected_text(unit.label())
@@ -3928,7 +3954,10 @@ impl NetFluxApp {
                                             [108.0, 38.0],
                                             egui::Button::new("Cancel")
                                                 .fill(egui::Color32::from_rgb(0x2b, 0x2b, 0x69))
-                                                .stroke(egui::Stroke::new(1.0, egui::Color32::from_rgb(0x65, 0x6c, 0xd9)))
+                                                .stroke(egui::Stroke::new(
+                                                    1.0,
+                                                    egui::Color32::from_rgb(0x65, 0x6c, 0xd9),
+                                                ))
                                                 .corner_radius(egui::CornerRadius::same(18)),
                                         )
                                         .clicked()
@@ -3938,10 +3967,15 @@ impl NetFluxApp {
                                     if ui
                                         .add_sized(
                                             [108.0, 38.0],
-                                            egui::Button::new(egui::RichText::new("Apply").strong())
-                                                .fill(egui::Color32::from_rgb(0x55, 0x50, 0xc8))
-                                                .stroke(egui::Stroke::new(1.2, egui::Color32::from_rgb(0xc0, 0xc2, 0xff)))
-                                                .corner_radius(egui::CornerRadius::same(18)),
+                                            egui::Button::new(
+                                                egui::RichText::new("Apply").strong(),
+                                            )
+                                            .fill(egui::Color32::from_rgb(0x55, 0x50, 0xc8))
+                                            .stroke(egui::Stroke::new(
+                                                1.2,
+                                                egui::Color32::from_rgb(0xc0, 0xc2, 0xff),
+                                            ))
+                                            .corner_radius(egui::CornerRadius::same(18)),
                                         )
                                         .clicked()
                                     {
@@ -3983,7 +4017,8 @@ impl NetFluxApp {
                     return;
                 }
                 _ => {
-                    modal.error = Some("Enter a valid non-negative number for each limit.".to_string());
+                    modal.error =
+                        Some("Enter a valid non-negative number for each limit.".to_string());
                 }
             }
         }
@@ -4148,7 +4183,7 @@ impl NetFluxApp {
                                                         .font(egui::TextStyle::Heading)
                                                         .horizontal_align(egui::Align::Center)
                                                         .hint_text("Unlimited")
-                                                        .vertical_align(egui::Align::Center)
+                                                        .vertical_align(egui::Align::Center),
                                                 );
                                                 ui.scope(|ui| {
                                                     // ComboBox paints its own button; style that widget
@@ -4181,7 +4216,6 @@ impl NetFluxApp {
                                                     });
                                                 });
                                             });
-
                                         });
 
                                         ui.vertical_centered(|ui| {
@@ -4317,7 +4351,7 @@ impl NetFluxApp {
                                     egui::TextEdit::singleline(&mut modal.custom_hours)
                                         .hint_text("0")
                                         .horizontal_align(egui::Align::Center)
-                                        .vertical_align(egui::Align::Center)
+                                        .vertical_align(egui::Align::Center),
                                 );
                                 ui.label("Hours");
                                 ui.add_space(12.0);
@@ -4326,7 +4360,7 @@ impl NetFluxApp {
                                     egui::TextEdit::singleline(&mut modal.custom_minutes)
                                         .hint_text("0")
                                         .horizontal_align(egui::Align::Center)
-                                        .vertical_align(egui::Align::Center)
+                                        .vertical_align(egui::Align::Center),
                                 );
                                 ui.label("Minutes");
                                 ui.label(

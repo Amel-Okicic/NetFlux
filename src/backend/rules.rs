@@ -39,13 +39,19 @@ pub fn load_global_limits() -> GlobalLimits {
         Ok(data) => match serde_json::from_str::<GlobalLimits>(&data) {
             Ok(limits) => limits,
             Err(e) => {
-                tracing::warn!("failed to parse {}: {e}; using unlimited global rates", path.display());
+                tracing::warn!(
+                    "failed to parse {}: {e}; using unlimited global rates",
+                    path.display()
+                );
                 GlobalLimits::default()
             }
         },
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => GlobalLimits::default(),
         Err(e) => {
-            tracing::warn!("failed to read {}: {e}; using unlimited global rates", path.display());
+            tracing::warn!(
+                "failed to read {}: {e}; using unlimited global rates",
+                path.display()
+            );
             GlobalLimits::default()
         }
     }
@@ -103,7 +109,11 @@ pub fn load() -> HashMap<String, Rule> {
                 }
             }
 
-            tracing::info!("loaded {} configured rule(s) from {}", map.len(), path.display());
+            tracing::info!(
+                "loaded {} configured rule(s) from {}",
+                map.len(),
+                path.display()
+            );
             map
         }
         Err(e) => {

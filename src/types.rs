@@ -97,6 +97,7 @@ mod tests {
 
 /// Live stats for one process, sent to the GUI once per second.
 #[derive(Debug, Clone, Default)]
+#[allow(dead_code)]
 pub struct ProcessStats {
     pub pid: u32,
     /// Full executable path (may be empty if resolution failed).
