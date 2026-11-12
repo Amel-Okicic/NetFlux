@@ -1,6 +1,8 @@
 # NetFlux
 
 [![Rust](https://img.shields.io/badge/built%20with-Rust-orange)](https://www.rust-lang.org/)
+[![Downloads](https://img.shields.io/github/downloads/Amel-Okicic/NetFlux/total?label=downloads)](https://github.com/Amel-Okicic/NetFlux/releases)
+[![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?style=flat&logo=paypal&logoColor=white)](https://paypal.me/AmelOkicic)
 
 **NetFlux is a source-available Windows network monitor and bandwidth controller.** It shows live network activity by process and gives you direct control over how much bandwidth each application can use — or how much bandwidth the entire computer can use.
 
@@ -371,4 +373,6 @@ The original Throttle portions remain under MIT. Amel's covered NetFlux contribu
 - Based on Throttle v0.1.2 by [Francesco Gruosso](https://github.com/FrancescoCoding)
 - Packet driver: WinDivert 2.2.2
 
-
+[[![Rust](https://img.shields.io/badge/built%20with-Rust-orange)](https://www.rust-lang.org/)
+[![Downloads](https://img.shields.io/github/downloads/Amel-Okicic/NetFlux/total?label=downloads)](https://github.com/Amel-Okicic/NetFlux/releases)
+[![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?style=flat&logo=paypal&logoColor=white)](https://paypal.me/AmelOkicic)
